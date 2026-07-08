@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍓 Igari Receipt Studio 🍧</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- เปลี่ยนเป็นฟอนต์ Itim และ Thasadith เพื่อความมินิมอล อ่านง่าย และน่ารักดุ๊กดิ๊ก -->
+    <link href="https://fonts.googleapis.com/css2?family=Itim&family=Thasadith:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Thasadith', 'Itim', sans-serif;
+            background-color: #F4F4F4;
+            color: #252C36; /* เปลี่ยนสีฟอนต์หลักเป็น 252C36 */
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* อัปเดตสีหลักของระบบตามโจทย์ */
+        .text-igari-main { color: #252C36; }
+        .border-igari { border-color: #252C36; }
+
+        /* ================= ANIMATIONS ================= */
+        @keyframes igari-flush {
+            0%, 100% { transform: translateY(0) scale(1); filter: drop-shadow(0 0 4px rgba(37,44,54,0.1)); }
+            50% { transform: translateY(-6px) scale(1.03); filter: drop-shadow(0 0 12px rgba(37,44,54,0.2)); }
+        }
+        @keyframes heart-beat {
+            0%, 100% { transform: scale(1) rotate(-5deg); }
+            50% { transform: scale(1.15) rotate(5deg); }
+        }
+        @keyframes puff-twinkle {
+            0%, 100% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 0.9; transform: scale(1.1); }
+        }
+        @keyframes float-cute {
+            0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+            50% { transform: translateY(-8px) rotate(10deg) scale(1.05); }
+        }
+        @keyframes fall-effect {
+            0% { transform: translateY(-20px) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(105vh) rotate(360deg); opacity: 0; }
+        }
+        
+        .animate-igari { animation: igari-flush 3.5s ease-in-out infinite; }
+        .animate-heart { animation: heart-beat 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+        .animate-puff { animation: puff-twinkle 2.5s ease-in-out infinite; }
+        .animate-bg-cute { animation: float-cute 4s ease-in-out infinite; }
+        
+        /* ================= GRID PATTERN BACKGROUND ================= */
+        .stripes-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            background-color: #F4F4F4;
+            background-image: 
+                linear-gradient(rgba(37, 44, 54, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(37, 44, 54, 0.03) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        .igari-blush-bg {
+            position: fixed;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(210, 0, 0, 0.1) 0%, transparent 70%);
+            filter: blur(40px);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* ตกแต่งรูปเล็กๆ กระจายเต็มพื้นหลัง ดุ๊กดิ๊ก */
+        .bg-element-cute {
+            position: fixed;
+            z-index: -1;
+            pointer-events: none;
+            object-fit: contain;
+        }
+
+        .falling-item {
+            position: fixed;
+            top: -5vh;
+            z-index: 50;
+            pointer-events: none;
+            animation: fall-effect linear infinite;
+        }
+
+        /* ================= RECEIPT STYLING ================= */
+        .minimal-play-receipt {
+            background-color: #ffffff;
+            position: relative;
+            border-radius: 32px;
+            border: 4px dashed #ABBB50;
+            box-shadow: 0 20px 40px rgba(37, 44, 54, 0.1);
+            padding: 40px 32px;
+            background-image: radial-gradient(rgba(37, 44, 54, 0.04) 2px, transparent 2px);
+            background-size: 24px 24px;
+        }
+        .play-mini-btn {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .play-mini-btn:hover {
+            transform: translateY(-2px) scale(1.02);
+            filter: brightness(0.95);
+        }
+        .play-mini-btn:active {
+            transform: translateY(1px);
+        }
+        .input-minimal {
+            border: 2px solid #E2E8F0;
+            border-radius: 16px;
+            transition: all 0.2s ease;
+            background-color: #FAFAFA;
+            color: #252C36;
+        }
+        .input-minimal:focus {
+            border-color: #252C36;
+            background-color: #ffffff;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(37, 44, 54, 0.15);
+        }
+        .icon-mini {
+            width: 22px;
+            height: 22px;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+
+    <div class="stripes-bg"></div>
+
+    <div class="igari-blush-bg" style="top: 10%; left: -100px;"></div>
+    <div class="igari-blush-bg" style="bottom: 15%; right: -100px; background: radial-gradient(circle, rgba(171, 187, 80, 0.15) 0%, transparent 70%);"></div>
+
+    <!-- เปลี่ยนรูปพื้นหลังกระจายเป็นรูปที่คุณกำหนด ขนาดเล็กๆ เคลื่อนไหวดุ๊กดิ๊ก ดึงดูดสายตา -->
+    <img src="https://i.postimg.cc/YSYzgrT4/mi-m-ch-x-682-20260708221022.png" class="bg-element-cute animate-bg-cute" style="top: 12%; left: 8%; width: 35px; height: 35px; animation-delay: 0s;">
+    <img src="https://i.postimg.cc/bvk9by4S/mi-m-ch-x-682-20260708221005.png" class="bg-element-cute animate-bg-cute" style="top: 45%; left: 4%; width: 32px; height: 32px; animation-delay: 1s;">
+    <img src="https://i.postimg.cc/vmft9YC4/star.png" class="bg-element-cute animate-bg-cute" style="top: 25%; right: 5%; width: 28px; height: 28px; animation-delay: 2s;">
+    <img src="https://i.postimg.cc/YSYzgrT4/mi-m-ch-x-682-20260708221022.png" class="bg-element-cute animate-bg-cute" style="bottom: 15%; left: 10%; width: 30px; height: 30px; animation-delay: 1.5s;">
+    <img src="https://i.postimg.cc/bvk9by4S/mi-m-ch-x-682-20260708221005.png" class="bg-element-cute animate-bg-cute" style="top: 18%; right: 22%; width: 34px; height: 34px; animation-delay: 0.5s;">
+    <img src="https://i.postimg.cc/vmft9YC4/star.png" class="bg-element-cute animate-bg-cute" style="bottom: 20%; right: 12%; width: 26px; height: 26px; animation-delay: 2.5s;">
+    <!-- Login Section -->
+    <div id="login-section" class="flex items-center justify-center min-h-[80vh]">
+        <div class="bg-white/95 backdrop-blur-md p-8 rounded-3xl w-96 border-4 border-[#ABBB50] shadow-xl animate-igari">
+            <h2 class="text-md font-medium mb-6 text-center text-igari-main tracking-wider flex items-center justify-center gap-2 font-['Itim'] text-lg">
+                <span class="animate-heart text-[#D00000] icon-mini">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.5 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                </span> 
+                IGARI RECEIPT STUDIO
+            </h2>
+            <div class="mb-4">
+                <label class="block text-slate-400 text-xs font-medium mb-1.5 uppercase tracking-wider">Username</label>
+                <input type="text" id="username" class="w-full px-4 py-2 input-minimal text-sm font-light" placeholder="ระบุผู้ใช้งาน">
+            </div>
+            <div class="mb-6">
+                <label class="block text-slate-400 text-xs font-medium mb-1.5 uppercase tracking-wider">Password</label>
+                <input type="password" id="password" class="w-full px-4 py-2 input-minimal text-sm font-light" placeholder="ระบุรหัสผ่าน">
+            </div>
+            <button onclick="handleLogin()" class="w-full play-mini-btn bg-[#252C36] hover:bg-[#1a1f26] text-white font-medium py-2.5 rounded-xl text-sm shadow-md tracking-wide flex items-center justify-center gap-2 font-['Itim'] text-base">
+                ENTER STUDIO 
+                <span class="animate-puff text-[#ABBB50] w-4 h-4 inline-block">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.2h7.6l-6.2 4.5 2.4 7.3-6.2-4.5-6.2 4.5 2.4-7.3-6.2-4.5h7.6z"/></svg>
+                </span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Section -->
+    <div id="main-section" class="container mx-auto max-w-5xl hidden">
+        <div class="flex justify-between items-center mb-8 bg-white/90 backdrop-blur-sm p-4 rounded-2xl border-2 border-white shadow-md">
+            <h1 class="text-sm font-medium text-igari-main tracking-wide flex items-center gap-2 font-['Itim'] text-base">
+                <span class="w-2.5 h-2.5 rounded-full bg-[#D00000] animate-ping"></span> Igari Makeup Studio (Minimal Blush)
+            </h1>
+            <button onclick="handleLogout()" class="bg-white text-slate-400 border border-slate-200 px-3 py-1 rounded-xl hover:bg-slate-100 transition text-xs font-medium">Log Out</button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+            
+            <!-- Editor Panel -->
+            <div class="bg-white/95 backdrop-blur-sm p-6 rounded-3xl border-2 border-white shadow-md">
+                <h3 class="text-xs font-medium mb-6 text-igari-main uppercase tracking-wider border-b-2 border-slate-100 pb-3 flex items-center gap-2 font-['Itim'] text-base">
+                    <span class="icon-mini text-[#D00000] animate-heart">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.5 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                    </span>
+                    Igari Editor Panel
+                </h3>
+                
+                <div class="mb-4">
+                    <label class="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                        <span class="icon-mini text-[#252C36]"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><circle cx="12" cy="12" r="3"/></svg></span>
+                        อัปโหลดโลโก้ร้าน
+                    </label>
+                    <input type="file" id="logo-input" accept="image/*" onchange="previewImage(this, 'logo-preview')" class="mt-1.5 block w-full text-xs text-slate-400 file:mr-4 file:py-1 file:px-3 file:rounded-xl file:border file:border-slate-200 file:text-xs file:font-medium file:bg-white file:text-slate-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                            <span class="icon-mini text-[#ABBB50]"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12h18M3 6h18M3 18h18"/></svg></span>
+                            ชื่อร้าน/หัวข้อหลัก
+                        </label>
+                        <input type="text" id="shop-name-input" value="pattira だ" class="mt-1.5 block w-full text-sm font-light input-minimal p-2.5" oninput="updateReceipt()">
+                    </div>
+                    <div>
+                        <label class="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                            <span class="icon-mini text-[#D00000]"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5z"/><circle cx="12" cy="12" r="3"/></svg></span>
+                            สโลแกน/ข้อความย่อย
+                        </label>
+                        <input type="text" id="shop-sub-input" value="THANK YOU FOR YOUR ORDER" class="mt-1.5 block w-full text-sm font-light input-minimal p-2.5" oninput="updateReceipt()">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                            <span class="icon-mini text-[#252C36]"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+                            ชื่อลูกค้า
+                        </label>
+                        <input type="text" id="customer-name-input" value="คุณพิมพลอย ใจดี" class="mt-1.5 block w-full text-sm font-light input-minimal p-2.5" oninput="updateReceipt()">
+                    </div>
+                    <div>
+                        <label class="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                            <span class="icon-mini text-[#ABBB50]"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></span>
+                            ช่องทางการซื้อขาย
+                        </label>
+                        <input type="text" id="channel-input" value="Instagram" class="mt-1.5 block w-full text-sm font-light input-minimal p-2.5" oninput="updateReceipt()">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                            <span class="icon-mini text-[#D00000]"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+                            Order ID
+                        </label>
+                        <input type="text" id="order-id-input" value="#KS-889" class="mt-1.5 block w-full text-sm font-light input-minimal p-2.5" oninput="updateReceipt()">
+                    </div>
+                    <div>
+                        <label class="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                            <span class="icon-mini text-[#252C36]"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+                            Time (เวลา)
+                        </label>
+                        <input type="text" id="time-input" value="14:25" class="mt-1.5 block w-full text-sm font-light input-minimal p-2.5" oninput="updateReceipt()">
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                        <span class="icon-mini text-[#ABBB50]"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+                        Date (วันที่)
+                    </label>
+                    <input type="text" id="date-input" value="07/07/2026" class="mt-1.5 block w-full text-sm font-light input-minimal p-2.5" oninput="updateReceipt()">
+                </div>
+
+                <div class="mb-4">
+                    <label class="flex items-center gap-1.5 text-xs font-medium text-igari-main mb-2 font-['Itim'] text-sm">
+                        <span class="icon-mini text-[#D00000]"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/></svg></span>
+                        รายการสินค้าในใบเสร็จ
+                    </label>
+                    <div id="items-container" class="space-y-2"></div>
+                    <button onclick="addItemRow()" class="mt-2.5 text-xs bg-slate-50 text-slate-500 border border-slate-200 font-medium px-3 py-2 rounded-xl hover:bg-slate-100 transition flex items-center gap-1 font-['Itim']">
+                        <span>+</span> เพิ่มรายการสินค้า
+                    </button>
+                </div>
+
+                <div class="mb-4">
+                    <label class="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                        <span class="icon-mini text-[#252C36]"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span>
+                        ข้อความขอบคุณ/หมายเหตุ
+                    </label>
+                    <input type="text" id="footer-note-input" value="ได้รับสินค้าแล้ว อย่าลืมรีวิวแท็กมาอวดกันน้า" class="mt-1.5 block w-full text-sm font-light input-minimal p-2.5" oninput="updateReceipt()">
+                </div>
+
+                <div class="mb-4">
+                    <label class="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                        <span class="icon-mini text-[#ABBB50]"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></span>
+                        รูปภาพตกแต่งด้านล่างสุด (Footer Banner)
+                    </label>
+                    <input type="file" id="footer-img-input" accept="image/*" onchange="previewImage(this, 'footer-preview')" class="mt-1.5 block w-full text-xs text-slate-400 file:mr-4 file:py-1 file:px-3 file:rounded-xl file:border file:border-slate-200">
+                </div>
+
+                <div class="mb-6">
+                    <label class="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                        <span class="icon-mini text-[#D00000]"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+                        ข้อความหมายเหตุด้านล่างสุด
+                    </label>
+                    <input type="text" id="bottom-text-input" value="ขอบคุณที่อุดหนุนร้านเล็กๆ ของเรานะคะ ช่องทางติดต่อ Line: @kosamestore" class="mt-1.5 block w-full text-sm font-light input-minimal p-2.5" oninput="updateReceipt()">
+                </div>
+
+                <button onclick="downloadReceiptImage()" class="w-full play-mini-btn bg-[#D00000] text-white font-medium py-3 rounded-xl transition mt-2 shadow-md text-sm tracking-wider hover:bg-[#a80000] font-['Itim'] text-base">
+                    DOWNLOAD IGARI RECEIPT
+                </button>
+            </div>
+
+            <!-- Receipt Preview Area -->
+            <div class="relative p-4">
+                <div class="minimal-play-receipt min-h-[660px] flex flex-col justify-between" id="receipt-print-area">
+                    <div class="absolute top-4 left-4 text-[#252C36]/20 w-4 h-4 select-none"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.5 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></div>
+                    <div class="absolute top-4 right-4 text-[#ABBB50]/60 w-4 h-4 select-none"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.2h7.6l-6.2 4.5 2.4 7.3-6.2-4.5-6.2 4.5 2.4-7.3-6.2-4.5h7.6z"/></svg></div>
+                    <div class="absolute bottom-4 left-4 text-[#252C36]/20 w-4 h-4 select-none"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.2h7.6l-6.2 4.5 2.4 7.3-6.2-4.5-6.2 4.5 2.4-7.3-6.2-4.5h7.6z"/></svg></div>
+                    <div class="absolute bottom-4 right-4 text-[#D00000]/40 w-4 h-4 select-none"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.5 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></div>
+
+                    <div>
+                        <div class="flex justify-center mb-4 animate-igari">
+                            <div class="w-16 h-16 rounded-full overflow-hidden border-4 border-[#ABBB50] bg-white p-1 flex items-center justify-center shadow-md">
+                                <img id="logo-preview" src="https://via.placeholder.com/150/fff/D00000?text=%E2%9D%A4%EF%B8%8F" alt="Logo" class="w-full h-full object-cover rounded-full">
+                            </div>
+                        </div>
+
+                        <div class="text-center mb-6">
+                            <h2 id="shop-name-view" class="text-xl font-medium text-igari-main tracking-wide font-['Itim'] text-2xl">pattira だ</h2>
+                            <p id="shop-sub-view" class="text-[9px] text-slate-400 font-medium tracking-widest uppercase mt-1">THANK YOU FOR YOUR ORDER</p>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-y-2 text-xs font-light text-slate-400 mb-4 px-1">
+                            <div><span>Customer:</span> <span id="customer-name-view" class="text-igari-main font-normal ml-1"></span></div>
+                            <div class="text-right"><span>Order ID:</span> <span id="order-id-view" class="text-igari-main font-normal ml-1"></span></div>
+                            <div><span>Channel:</span> <span id="channel-view" class="text-slate-500 font-normal ml-1"></span></div>
+                            <div class="text-right"><span>Date:</span> <span id="date-view" class="text-slate-500 ml-1"></span></div>
+                            <div></div>
+                            <div class="text-right"><span>Time:</span> <span id="time-view" class="text-slate-500 ml-1"></span></div>
+                        </div>
+
+                        <div class="border-b-2 border-dashed border-slate-100 my-4"></div>
+
+                        <div id="receipt-items-view" class="space-y-4 my-4 text-xs font-light text-igari-main"></div>
+                    </div>
+
+                    <div>
+                        <div class="border-b-2 border-dashed border-slate-100 my-4"></div>
+                        
+                        <div class="bg-[#252C36]/5 rounded-2xl p-3 flex justify-between items-center mb-4 px-4 border border-[#252C36]/10">
+                            <span class="text-xs font-medium text-[#252C36] tracking-wider uppercase flex items-center gap-1.5 font-['Itim']">
+                                TOTAL 
+                                <span class="icon-mini text-[#D00000] animate-heart"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.5 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></span>
+                            </span>
+                            <span class="text-md font-medium text-igari-main font-['Itim'] text-xl">฿<span id="total-amount-view">0.00</span></span>
+                        </div>
+
+                        <div id="footer-note-view" class="text-center text-[11px] text-[#252C36] font-light my-3 px-3 bg-[#ABBB50]/10 py-2 rounded-xl border border-[#ABBB50]/30 animate-igari"></div>
+
+                        <div class="mt-2 flex justify-center">
+                            <img id="footer-preview" src="https://via.placeholder.com/340x60/252C36/ffffff?text=%E2%9D%A4%EF%B8%8F+FLUSH+BLUSH+PLAYROOM+%E2%9D%A4%EF%B8%8F" alt="Footer Banner" class="max-w-full h-auto rounded-xl object-contain border border-slate-100">
+                        </div>
+
+                        <div id="bottom-text-view" class="text-center text-[10px] text-slate-400 font-light mt-4 px-2 tracking-wide"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let items = [
+            { name: 'เค้กสตรอว์เบอร์รี่ครีมสด', qty: 2, price: 85.00 },
+            { name: 'ชานมพาสเทลลาเต้', qty: 1, price: 55.00 }
+        ];
+
+        function handleLogin() {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            
+            if(user === 'minnek1256' && pass === 'yinkza1256') {
+                document.getElementById('login-section').classList.add('hidden');
+                document.getElementById('main-section').classList.remove('hidden');
+                initData();
+            } else {
+                alert('Username หรือ Password ไม่ถูกต้อง 😭');
+            }
+        }
+
+        function handleLogout() {
+            document.getElementById('login-section').classList.remove('hidden');
+            document.getElementById('main-section').classList.add('hidden');
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        function initData() {
+            renderItemInputs();
+            updateReceipt();
+            createFallingEffects();
+        }
+
+        function renderItemInputs() {
+            const container = document.getElementById('items-container');
+            container.innerHTML = '';
+            items.forEach((item, index) => {
+                container.innerHTML += `
+                    <div class="flex gap-2 items-center bg-slate-50 p-2 rounded-xl border border-slate-200">
+                        <input type="text" value="${item.name}" oninput="editItem(${index}, 'name', this.value)" placeholder="สินค้า" class="flex-1 border border-slate-200 rounded-lg p-1.5 text-xs font-light focus:outline-none focus:border-slate-400 text-igari-main">
+                        <input type="number" value="${item.qty}" oninput="editItem(${index}, 'qty', this.value)" placeholder="จำนวน" class="w-12 border border-slate-200 rounded-lg p-1.5 text-xs font-light text-center focus:outline-none focus:border-slate-400 text-igari-main">
+                        <input type="number" value="${item.price}" oninput="editItem(${index}, 'price', this.value)" placeholder="ราคา" class="w-16 border border-slate-200 rounded-lg p-1.5 text-xs font-light text-right focus:outline-none focus:border-slate-400 text-igari-main">
+                        <button onclick="removeItemRow(${index})" class="text-slate-400 font-light px-1 text-xs hover:text-rose-500">✕</button>
+                    </div>
+                `;
+            });
+        }
+
+        function addItemRow() {
+            items.push({ name: '', qty: 1, price: 0 });
+            renderItemInputs();
+            updateReceipt();
+        }
+
+        function removeItemRow(index) {
+            items.splice(index, 1);
+            renderItemInputs();
+            updateReceipt();
+        }
+
+        function editItem(index, key, value) {
+            items[index][key] = key === 'name' ? value : Number(value);
+            updateReceipt();
+        }
+
+        function updateReceipt() {
+            document.getElementById('shop-name-view').innerText = document.getElementById('shop-name-input').value;
+            document.getElementById('shop-sub-view').innerText = document.getElementById('shop-sub-input').value;
+            document.getElementById('customer-name-view').innerText = document.getElementById('customer-name-input').value;
+            document.getElementById('channel-view').innerText = document.getElementById('channel-input').value;
+            document.getElementById('order-id-view').innerText = document.getElementById('order-id-input').value;
+            document.getElementById('date-view').innerText = document.getElementById('date-input').value;
+            document.getElementById('time-view').innerText = document.getElementById('time-input').value;
+            
+            document.getElementById('footer-note-view').innerText = document.getElementById('footer-note-input').value;
+            document.getElementById('bottom-text-view').innerText = document.getElementById('bottom-text-input').value;
+
+            const itemsContainer = document.getElementById('receipt-items-view');
+            itemsContainer.innerHTML = '';
+            let total = 0;
+
+            items.forEach(item => {
+                const subtotal = item.qty * item.price;
+                total += subtotal;
+                
+                itemsContainer.innerHTML += `
+                    <div class="flex justify-between items-start tracking-wide">
+                        <div>
+                            <div class="font-normal text-igari-main">${item.name || 'ยังไม่ระบุสินค้า'}</div>
+                            <div class="text-[10px] text-slate-400 font-light mt-0.5">@${item.price.toFixed(2)} x ${item.qty}</div>
+                        </div>
+                        <div class="font-normal text-slate-500 text-right pt-0.5">${subtotal.toFixed(2)}</div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('total-amount-view').innerText = total.toFixed(2);
+        }
+
+        function previewImage(input, previewId) {
+            const preview = document.getElementById(previewId);
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function downloadReceiptImage() {
+            const receiptArea = document.getElementById('receipt-print-area');
+            const orderId = document.getElementById('order-id-input').value || 'receipt';
+            
+            html2canvas(receiptArea, {
+                useCORS: true,
+                scale: 3, 
+                backgroundColor: '#ffffff',
+                borderRadius: '32px'
+            }).then(canvas => {
+                const image = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = `igari-receipt-${orderId}.png`;
+                link.href = image;
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }).catch(error => {
+                console.error('Error generating canvas:', error);
+                alert('เกิดข้อผิดพลาดในการบันทึกภาพ กรุณาลองใหม่อีกครั้ง');
+            });
+        }
+
+        /* ================= อัปเดตรูปภาพเอฟเฟกต์ร่วงหล่นเป็นรูปขนาดเล็กตามโจทย์กำหนด ================= */
+        function createFallingEffects() {
+            if (document.querySelector('.falling-item')) return;
+
+            const IMAGES_POOL = [
+                'https://i.postimg.cc/vmft9YC4/star.png',
+                'https://i.postimg.cc/TPgJmdBL/mi-m-ch-x-682-20260708221123.png'
+            ];
+
+            setInterval(() => {
+                const element = document.createElement('img');
+                element.className = 'falling-item';
+                
+                // สุ่มเลือกรูปภาพจากรายการที่ระบุ
+                element.src = IMAGES_POOL[Math.floor(Math.random() * IMAGES_POOL.length)];
+
+                // ปรับขนาดรูปให้เป็นรูปเล็กๆ น่ารัก
+                const size = Math.floor(Math.random() * 10) + 14; 
+                element.style.width = `${size}px`;
+                element.style.height = `${size}px`;
+
+                element.style.left = `${Math.random() * 100}vw`;
+
+                const duration = Math.random() * 4 + 4;
+                element.style.animationDuration = `${duration}s`;
+
+                document.body.appendChild(element);
+
+                setTimeout(() => {
+                    element.remove();
+                }, duration * 1000);
+
+            }, 350);
+        }
+    </script>
+</body>
+</html>
