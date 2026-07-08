@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤸‍♂️ Playground Receipt Studio 🎈</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Kanit', sans-serif;
+            /* โทนสีตามที่กำหนด: ฟ้าพาสเทล (#C3E0F6), เขียวพาสเทล (#D1FAE5), ส้มพาสเทล (#FFEDD5) */
+            background: linear-gradient(135deg, #C3E0F6 0%, #D1FAE5 50%, #FFEDD5 100%);
+            background-attachment: fixed;
+        }
+        
+        /* ใบเสร็จสไตล์สนามเด็กเล่น - ขอบมนหนาๆ มีเงาสีส้มอิฐสไตล์บล็อกไม้ของเล่น */
+        .playground-receipt {
+            background-color: #ffffff;
+            position: relative;
+            border-radius: 32px;
+            box-shadow: 8px 8px 0px 0px #FDBA74, 0px 10px 25px rgba(0,0,0,0.05);
+            border: 4px solid #7DD3FC;
+            padding: 32px 24px;
+        }
+
+        /* ขอบหยักซิกแซกด้านล่างเลียนแบบตั๋วเครื่องเล่นในสนามเด็กเล่น */
+        .zigzag-edge {
+            background-image: linear-gradient(-45deg, transparent 4px, #ffffff 4px), 
+                              linear-gradient(45deg, transparent 4px, #ffffff 4px);
+            background-size: 8px 12px;
+            background-repeat: repeat-x;
+            height: 12px;
+            width: 100%;
+            position: absolute;
+            bottom: -11px;
+            left: 0;
+            filter: drop-shadow(0px 4px 0px #FDBA74);
+        }
+
+        /* ปุ่มกดสไตล์สปริงในสนามเด็กเล่น เด้งดึ๋งเมื่อกดยกตัว */
+        .bounce-btn {
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 0px #BAE6FD;
+        }
+        .bounce-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 0px #7DD3FC;
+        }
+        .bounce-btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 0px #7DD3FC;
+        }
+
+        .input-fun {
+            border: 3px solid #E2E8F0;
+            transition: all 0.2s ease;
+        }
+        .input-fun:focus {
+            border-color: #7DD3FC;
+            background-color: #F0F9FF;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+
+    <!-- เซกชัน Login ธีมบล็อกไม้บล็อกใจ -->
+    <div id="login-section" class="flex items-center justify-center min-h-[80vh]">
+        <div class="bg-white p-8 rounded-[32px] shadow-xl w-96 border-4 border-[#FDBA74] relative">
+            <div class="absolute -top-5 -right-3 text-3xl animate-bounce">🎈</div>
+            <div class="absolute -bottom-4 -left-4 text-3xl">🧩</div>
+            <h2 class="text-2xl font-bold mb-6 text-center text-[#0369A1] flex items-center justify-center gap-2">
+                <span>🎨</span> เข้าสู่ระบบเครื่องเล่น
+            </h2>
+            <div class="mb-4">
+                <label class="block text-[#0369A1] text-sm font-semibold mb-1.5">Username</label>
+                <input type="text" id="username" class="w-full px-4 py-2 input-fun rounded-2xl focus:outline-none" value="admin">
+            </div>
+            <div class="mb-6">
+                <label class="block text-[#0369A1] text-sm font-semibold mb-1.5">Password</label>
+                <input type="password" id="password" class="w-full px-4 py-2 input-fun rounded-2xl focus:outline-none" value="1234">
+            </div>
+            <button onclick="handleLogin()" class="w-full bounce-btn bg-[#7DD3FC] text-[#0369A1] font-bold py-3 px-4 rounded-2xl transition">LET'S PLAY! 🤸‍♂️</button>
+            <p class="text-xs text-sky-400 mt-4 text-center font-medium">* Admin / 1234</p>
+        </div>
+    </div>
+
+    <!-- เซกชันหลัก -->
+    <div id="main-section" class="container mx-auto max-w-5xl hidden">
+        <div class="flex justify-between items-center mb-6 bg-white p-4 rounded-2xl border-3 border-[#7DD3FC] shadow-sm">
+            <h1 class="text-xl font-bold text-[#0369A1] flex items-center gap-2">🍭 Playground Receipt Studio</h1>
+            <button onclick="handleLogout()" class="bg-[#FCA5A5] text-white border-2 border-white px-4 py-1.5 rounded-xl hover:bg-rose-400 transition text-sm font-bold shadow-sm">LOGOUT 🏃‍♂️</button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+            
+            <!-- ฝั่งซ้าย: ฟอร์มแก้ไขข้อมูลดีไซน์กระดานวาดรูป -->
+            <div class="bg-white p-6 rounded-[32px] border-4 border-[#A7F3D0]">
+                <h3 class="text-md font-bold mb-4 text-[#047857] border-b-4 border-dashed border-[#A7F3D0] pb-2 flex items-center gap-1">🖍️ บันทึกเครื่องเล่น</h3>
+                
+                <div class="mb-4">
+                    <label class="block text-xs font-bold text-emerald-600">อัปโหลดโลโก้ร้าน</label>
+                    <input type="file" id="logo-input" accept="image/*" onchange="previewImage(this, 'logo-preview')" class="mt-1 block w-full text-xs text-gray-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-[#D1FAE5] file:text-[#047857] hover:file:opacity-80">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-xs font-bold text-emerald-600">ชื่อร้าน/หัวข้อหลัก</label>
+                        <input type="text" id="shop-name-input" value="Kosame Store" class="mt-1 block w-full text-sm input-fun rounded-xl p-2 focus:outline-none" oninput="updateReceipt()">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-emerald-600">สโลแกน/ข้อความย่อย</label>
+                        <input type="text" id="shop-sub-input" value="THANK YOU FOR YOUR ORDER" class="mt-1 block w-full text-sm input-fun rounded-xl p-2 focus:outline-none" oninput="updateReceipt()">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-xs font-bold text-emerald-600">ชื่อลูกค้า</label>
+                        <input type="text" id="customer-name-input" value="คุณพิมพลอย ใจดี" class="mt-1 block w-full text-sm input-fun rounded-xl p-2 focus:outline-none" oninput="updateReceipt()">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-emerald-600">ช่องทางการซื้อขาย</label>
+                        <input type="text" id="channel-input" value="Instagram" class="mt-1 block w-full text-sm input-fun rounded-xl p-2 focus:outline-none" oninput="updateReceipt()">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-xs font-bold text-emerald-600">Order ID</label>
+                        <input type="text" id="order-id-input" value="#KS-889" class="mt-1 block w-full text-sm input-fun rounded-xl p-2 focus:outline-none" oninput="updateReceipt()">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-emerald-600">Time (เวลา)</label>
+                        <input type="text" id="time-input" value="14:25" class="mt-1 block w-full text-sm input-fun rounded-xl p-2 focus:outline-none" oninput="updateReceipt()">
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-xs font-bold text-emerald-600">Date (วันที่)</label>
+                    <input type="text" id="date-input" value="07/07/2026" class="mt-1 block w-full text-sm input-fun rounded-xl p-2 focus:outline-none" oninput="updateReceipt()">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-xs font-bold text-[#047857] mb-2">รายการของเล่น / สินค้า</label>
+                    <div id="items-container" class="space-y-2"></div>
+                    <button onclick="addItemRow()" class="mt-2 text-xs bg-[#A7F3D0] text-[#047857] font-bold px-3 py-1.5 rounded-xl border-2 border-white shadow-sm hover:opacity-80 transition">+ เพิ่มรายการ</button>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-xs font-bold text-emerald-600">ข้อความขอบคุณ/หมายเหตุ</label>
+                    <input type="text" id="footer-note-input" value="✨ ได้รับสินค้าแล้ว อย่าลืมรีวิวแท็กมาอวดกันน้า ✨" class="mt-1 block w-full text-sm input-fun rounded-xl p-2 focus:outline-none" oninput="updateReceipt()">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-xs font-bold text-emerald-600">รูปภาพตกแต่งด้านล่างสุด (Footer Banner)</label>
+                    <input type="file" id="footer-img-input" accept="image/*" onchange="previewImage(this, 'footer-preview')" class="mt-1 block w-full text-xs text-gray-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-[#D1FAE5] file:text-[#047857] hover:file:opacity-80">
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-xs font-bold text-emerald-600">ข้อความหมายเหตุด้านล่างสุด</label>
+                    <input type="text" id="bottom-text-input" value="ขอบคุณที่อุดหนุนร้านเล็กๆ ของเรานะคะ ช่องทางติดต่อ Line: @kosamestore" class="mt-1 block w-full text-sm input-fun rounded-xl p-2 focus:outline-none" oninput="updateReceipt()">
+                </div>
+
+                <button onclick="downloadReceiptImage()" class="w-full bounce-btn bg-[#FDBA74] text-white font-bold py-3.5 rounded-2xl transition mt-2 flex items-center justify-center gap-2 text-md">
+                    🎡 🛝 ดาวน์โหลดตั๋วใบเสร็จสนามเด็กเล่น 🛝 🎡
+                </button>
+            </div>
+            <!-- ฝั่งขวา: พรีวิวใบเสร็จสไตล์ตั๋วเครื่องเล่น สีสันสดใสตามสั่ง (ไม่มีคำแปลไทยกำกับ) -->
+            <div class="playground-receipt min-h-[680px] flex flex-col justify-between" id="receipt-print-area">
+                <div>
+                    <!-- หัวตั๋วดีไซน์ก้อนเมฆและไอคอนของเล่น -->
+                    <div class="flex justify-between items-center mb-4 border-b-4 border-[#C3E0F6] pb-3">
+                        <span class="text-xl">☁️</span>
+                        <div class="w-16 h-16 rounded-2xl overflow-hidden border-4 border-[#FDBA74] shadow-sm bg-white p-1 flex items-center justify-center rotate-3">
+                            <img id="logo-preview" src="https://via.placeholder.com/150/fff/0369A1?text=%F0%9F%A7%A9" alt="Logo" class="w-full h-full object-cover rounded-xl">
+                        </div>
+                        <span class="text-xl">🪀</span>
+                    </div>
+
+                    <div class="text-center mb-6">
+                        <h2 id="shop-name-view" class="text-2xl font-extrabold text-[#0369A1] tracking-wide">Kosame Store</h2>
+                        <p id="shop-sub-view" class="text-[10px] text-orange-400 font-bold tracking-widest uppercase mt-0.5">THANK YOU FOR YOUR ORDER</p>
+                    </div>
+
+                    <!-- ข้อมูลบิล ภาษาอังกฤษล้วน สแกนอ่านง่ายไม่มีภาษาไทยปน -->
+                    <div class="grid grid-cols-2 gap-y-2 text-xs font-semibold text-sky-700/80 mb-4 px-1">
+                        <div><span class="text-orange-400">Customer:</span> <span id="customer-name-view" class="text-gray-800 font-bold"></span></div>
+                        <div class="text-right"><span class="text-orange-400">Order ID:</span> <span id="order-id-view" class="text-gray-800 font-bold"></span></div>
+                        <div><span class="text-orange-400">Channel:</span> <span id="channel-view" class="text-emerald-500 font-bold"></span></div>
+                        <div class="text-right"><span class="text-orange-400">Date:</span> <span id="date-view" class="text-gray-600 font-bold"></span></div>
+                        <div></div>
+                        <div class="text-right"><span class="text-orange-400">Time:</span> <span id="time-view" class="text-gray-600 font-bold"></span></div>
+                    </div>
+
+                    <!-- เส้นแบ่งประสีส้มสไตล์ตั๋วฉีก -->
+                    <div class="border-b-4 border-dotted border-orange-200 my-4"></div>
+
+                    <!-- รายการสินค้าและราคา -->
+                    <div id="receipt-items-view" class="space-y-4 my-4 text-xs font-medium text-gray-700"></div>
+                </div>
+
+                <div>
+                    <div class="border-b-4 border-dotted border-orange-200 my-4"></div>
+                    
+                    <!-- บล็อกยอดรวมสไตล์กระดานคะแนนเกม -->
+                    <div class="bg-[#FFEDD5] rounded-2xl p-3.5 flex justify-between items-center mb-4 px-4 border-3 border-[#FDBA74]">
+                        <span class="text-sm font-extrabold text-orange-600 tracking-wider uppercase">TOTAL</span>
+                        <span class="text-lg font-black text-[#0369A1]">฿<span id="total-amount-view">0.00</span></span>
+                    </div>
+
+                    <!-- คำโน้ตข้อความด้านล่าง -->
+                    <div id="footer-note-view" class="text-center text-[11px] text-emerald-600 font-bold my-3 px-3 bg-[#D1FAE5] py-2 rounded-xl border-2 border-white shadow-sm"></div>
+
+                    <!-- แบนเนอร์ท้ายบิล -->
+                    <div class="mt-2 flex justify-center">
+                        <img id="footer-preview" src="https://via.placeholder.com/340x80/C3E0F6/0369A1?text=%F0%9F%A2%9D+HAVE+A+GOOD+PLAYTIME+%F0%9F%A2%9D" alt="Footer Banner" class="max-w-full h-auto rounded-xl object-contain border-2 border-[#7DD3FC]">
+                    </div>
+
+                    <!-- ข้อความล่างสุดบิล -->
+                    <div id="bottom-text-view" class="text-center text-[10px] text-sky-600/70 font-medium mt-4 px-2"></div>
+                </div>
+                
+                <!-- ขอบหยักลูกไม้ตั๋วสนามเด็กเล่นด้านท้ายสุด -->
+                <div class="zigzag-edge"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let items = [
+            { name: 'เค้กสตรอว์เบอร์รี่ครีมสด', qty: 2, price: 85.00 },
+            { name: 'ชานมพาสเทลลาเต้', qty: 1, price: 55.00 }
+        ];
+
+        function handleLogin() {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            if(user === 'admin' && pass === '1234') {
+                document.getElementById('login-section').classList.add('hidden');
+                document.getElementById('main-section').classList.remove('hidden');
+                initData();
+            } else {
+                alert('รหัสผ่านไม่ถูกต้อง ลองเข้าใหม่อีกทีนะเจ้าตัวเล็ก! 🧩🎪');
+            }
+        }
+
+        function handleLogout() {
+            document.getElementById('login-section').classList.remove('hidden');
+            document.getElementById('main-section').classList.add('hidden');
+        }
+
+        function initData() {
+            renderItemInputs();
+            updateReceipt();
+        }
+
+        function renderItemInputs() {
+            const container = document.getElementById('items-container');
+            container.innerHTML = '';
+            items.forEach((item, index) => {
+                container.innerHTML += `
+                    <div class="flex gap-2 items-center bg-sky-50 p-2 rounded-xl border-2 border-[#7DD3FC]/40">
+                        <input type="text" value="${item.name}" oninput="editItem(${index}, 'name', this.value)" placeholder="สินค้า" class="flex-1 border border-gray-200 rounded-lg p-1.5 text-xs focus:outline-none focus:border-[#7DD3FC]">
+                        <input type="number" value="${item.qty}" oninput="editItem(${index}, 'qty', this.value)" placeholder="จำนวน" class="w-12 border border-gray-200 rounded-lg p-1.5 text-xs text-center focus:outline-none focus:border-[#7DD3FC]">
+                        <input type="number" value="${item.price}" oninput="editItem(${index}, 'price', this.value)" placeholder="ราคา" class="w-16 border border-gray-200 rounded-lg p-1.5 text-xs text-right focus:outline-none focus:border-[#7DD3FC]">
+                        <button onclick="removeItemRow(${index})" class="text-rose-400 font-bold px-1 text-xs hover:text-rose-600">✕</button>
+                    </div>
+                `;
+            });
+        }
+
+        function addItemRow() {
+            items.push({ name: '', qty: 1, price: 0 });
+            renderItemInputs();
+            updateReceipt();
+        }
+
+        function removeItemRow(index) {
+            items.splice(index, 1);
+            renderItemInputs();
+            updateReceipt();
+        }
+
+        function editItem(index, key, value) {
+            items[index][key] = key === 'name' ? value : Number(value);
+            updateReceipt();
+        }
+
+        function updateReceipt() {
+            document.getElementById('shop-name-view').innerText = document.getElementById('shop-name-input').value;
+            document.getElementById('shop-sub-view').innerText = document.getElementById('shop-sub-input').value;
+            document.getElementById('customer-name-view').innerText = document.getElementById('customer-name-input').value;
+            document.getElementById('channel-view').innerText = document.getElementById('channel-input').value;
+            document.getElementById('order-id-view').innerText = document.getElementById('order-id-input').value;
+            document.getElementById('date-view').innerText = document.getElementById('date-input').value;
+            document.getElementById('time-view').innerText = document.getElementById('time-input').value;
+            
+            document.getElementById('footer-note-view').innerText = document.getElementById('footer-note-input').value;
+            document.getElementById('bottom-text-view').innerText = document.getElementById('bottom-text-input').value;
+
+            const itemsContainer = document.getElementById('receipt-items-view');
+            itemsContainer.innerHTML = '';
+            let total = 0;
+
+            items.forEach(item => {
+                const subtotal = item.qty * item.price;
+                total += subtotal;
+                
+                itemsContainer.innerHTML += `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="font-bold text-gray-800">${item.name || 'ยังไม่ระบุสินค้า'}</div>
+                            <div class="text-[10px] text-gray-400 mt-0.5">@${item.price.toFixed(2)} x ${item.qty}</div>
+                        </div>
+                        <div class="font-bold text-gray-700 text-right pt-0.5">${subtotal.toFixed(2)}</div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('total-amount-view').innerText = total.toFixed(2);
+        }
+
+        function previewImage(input, previewId) {
+            const preview = document.getElementById(previewId);
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function downloadReceiptImage() {
+            const receiptArea = document.getElementById('receipt-print-area');
+            const orderId = document.getElementById('order-id-input').value || 'receipt';
+            
+            html2canvas(receiptArea, {
+                useCORS: true,
+                scale: 3, 
+                backgroundColor: '#ffffff',
+                borderRadius: '32px'
+            }).then(canvas => {
+                const image = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = `playground-receipt-${orderId}.png`;
+                link.href = image;
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }).catch(error => {
+                console.error('เกิดข้อผิดพลาดในการบันทึกรูปภาพ:', error);
+                alert('หว่าา บันทึกภาพไม่ได้ ลองกดเซฟใหม่อีกครั้งนะขรับบ! 🎡');
+            });
+        }
+    </script>
+</body>
+</html>
