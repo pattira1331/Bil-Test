@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบจัดการและสร้างใบเสร็จสุดน่ารัก</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cute+Font&family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Kanit', sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #f3e8ff 50%, #fce7f3 100%);
+        }
+        
+        /* ดีไซน์กรอบใบเสร็จสไตล์น่ารักมินิมอล เส้นคู่โค้งมน */
+        .cute-receipt {
+            background-color: #ffffff;
+            position: relative;
+            border-radius: 32px;
+            box-shadow: 0 20px 40px -15px rgba(219, 39, 119, 0.1);
+            border: 6px double #f472b6;
+            padding: 28px;
+        }
+
+        /* ตกแต่งปุ่มสไตล์เยลลี่น่ารัก */
+        .jelly-btn {
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .jelly-btn:hover {
+            transform: scale(1.02);
+        }
+        
+        .number-font {
+            font-family: 'Kanit', sans-serif;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+
+    <div id="login-section" class="flex items-center justify-center min-h-[80vh]">
+        <div class="bg-white/80 backdrop-blur-md p-8 rounded-3xl shadow-xl w-96 border border-pink-100">
+            <h2 class="text-2xl font-bold mb-6 text-center bg-gradient-to-r from-sky-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">🦄 เข้าสู่ระบบใบเสร็จ</h2>
+            <div class="mb-4">
+                <label class="block text-purple-600 text-sm font-medium mb-2">Username</label>
+                <input type="text" id="username" class="w-full px-4 py-2 border border-pink-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-pink-300" value="admin">
+            </div>
+            <div class="mb-6">
+                <label class="block text-purple-600 text-sm font-medium mb-2">Password</label>
+                <input type="password" id="password" class="w-full px-4 py-2 border border-pink-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-pink-300" value="1234">
+            </div>
+            <button onclick="handleLogin()" class="w-full jelly-btn bg-gradient-to-r from-sky-400 via-purple-400 to-pink-400 text-white font-medium py-2.5 px-4 rounded-2xl hover:opacity-90 transition shadow-md shadow-pink-200">เข้าสู่ระบบ</button>
+            <p class="text-xs text-gray-400 mt-4 text-center">* Admin / 1234</p>
+        </div>
+    </div>
+
+    <div id="main-section" class="container mx-auto max-w-5xl hidden">
+        <div class="flex justify-between items-center mb-6 bg-white/60 backdrop-blur-sm p-4 rounded-2xl border border-white/40">
+            <h1 class="text-xl font-bold bg-gradient-to-r from-sky-500 via-purple-500 to-pink-500 bg-clip-text text-transparent flex items-center gap-2">🎨 ระบบสร้างใบเสร็จพาสเทลมินิมอล</h1>
+            <button onclick="handleLogout()" class="bg-rose-400 text-white px-4 py-1.5 rounded-xl hover:bg-rose-500 transition text-sm font-light">ออกจากระบบ</button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+            
+            <div class="bg-white/90 p-6 rounded-3xl shadow-sm border border-purple-100">
+                <h3 class="text-md font-semibold mb-4 text-purple-500 border-b border-purple-100 pb-2">✏️ แก้ไขข้อมูลใบเสร็จ</h3>
+                
+                <div class="mb-4">
+                    <label class="block text-xs font-medium text-gray-500">อัปโหลดโลโก้ร้าน</label>
+                    <input type="file" id="logo-input" accept="image/*" onchange="previewImage(this, 'logo-preview')" class="mt-1 block w-full text-xs text-gray-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-medium file:bg-purple-50 file:text-purple-600 hover:file:bg-purple-100">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500">ชื่อร้าน/หัวข้อหลัก</label>
+                        <input type="text" id="shop-name-input" value="Kosame Store" class="mt-1 block w-full text-sm border border-purple-100 rounded-xl p-2 focus:ring-2 focus:ring-purple-200 focus:outline-none" oninput="updateReceipt()">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500">สโลแกน/ข้อความย่อย</label>
+                        <input type="text" id="shop-sub-input" value="THANK YOU FOR YOUR ORDER" class="mt-1 block w-full text-sm border border-purple-100 rounded-xl p-2 focus:ring-2 focus:ring-purple-200 focus:outline-none" oninput="updateReceipt()">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500">ชื่อลูกค้า</label>
+                        <input type="text" id="customer-name-input" value="คุณพิมพลอย ใจดี" class="mt-1 block w-full text-sm border border-purple-100 rounded-xl p-2 focus:ring-2 focus:ring-purple-200 focus:outline-none" oninput="updateReceipt()">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500">ช่องทางการซื้อขาย</label>
+                        <input type="text" id="channel-input" value="Instagram" class="mt-1 block w-full text-sm border border-purple-100 rounded-xl p-2 focus:ring-2 focus:ring-purple-200 focus:outline-none" oninput="updateReceipt()">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500">Order ID</label>
+                        <input type="text" id="order-id-input" value="#KS-889" class="mt-1 block w-full text-sm border border-purple-100 rounded-xl p-2 focus:ring-2 focus:ring-purple-200 focus:outline-none" oninput="updateReceipt()">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500">Time (เวลา)</label>
+                        <input type="text" id="time-input" value="14:25" class="mt-1 block w-full text-sm border border-purple-100 rounded-xl p-2 focus:ring-2 focus:ring-purple-200 focus:outline-none" oninput="updateReceipt()">
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-xs font-medium text-gray-500">Date (วันที่)</label>
+                    <input type="text" id="date-input" value="07/07/2026" class="mt-1 block w-full text-sm border border-purple-100 rounded-xl p-2 focus:ring-2 focus:ring-purple-200 focus:outline-none" oninput="updateReceipt()">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-xs font-semibold text-gray-500 mb-2">รายการสินค้าในใบเสร็จ</label>
+                    <div id="items-container" class="space-y-2"></div>
+                    <button onclick="addItemRow()" class="mt-2 text-xs bg-purple-400 text-white px-3 py-1.5 rounded-xl hover:bg-purple-500 transition">+ เพิ่มรายการสินค้า</button>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-xs font-medium text-gray-500">ข้อความขอบคุณ/หมายเหตุ (บนบัตรท้ายบิล)</label>
+                    <input type="text" id="footer-note-input" value="✨ ได้รับสินค้าแล้ว อย่าลืมรีวิวแท็กมาอวดกันน้า ✨" class="mt-1 block w-full text-sm border border-purple-100 rounded-xl p-2 focus:ring-2 focus:ring-purple-200 focus:outline-none" oninput="updateReceipt()">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-xs font-medium text-gray-500">รูปภาพตกแต่งด้านล่างสุด (Footer Banner)</label>
+                    <input type="file" id="footer-img-input" accept="image/*" onchange="previewImage(this, 'footer-preview')" class="mt-1 block w-full text-xs text-gray-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-medium file:bg-purple-50 file:text-purple-600 hover:file:bg-purple-100">
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-xs font-medium text-gray-500">ข้อความหมายเหตุด้านล่างสุด (ใต้ Footer Banner)</label>
+                    <input type="text" id="bottom-text-input" value="ขอบคุณที่อุดหนุนร้านเล็กๆ ของเรานะคะ ช่องทางติดต่อ Line: @kosamestore" class="mt-1 block w-full text-sm border border-purple-100 rounded-xl p-2 focus:ring-2 focus:ring-purple-200 focus:outline-none" oninput="updateReceipt()">
+                </div>
+
+                <button onclick="downloadReceiptImage()" class="w-full jelly-btn bg-gradient-to-r from-sky-400 via-purple-400 to-pink-400 text-white font-medium py-3 rounded-2xl hover:opacity-95 transition mt-2 shadow-lg shadow-purple-100 flex items-center justify-center gap-2">
+                    ✨🧁 ดาวน์โหลดใบเสร็จสุดน่ารัก 🧁✨
+                </button>
+            </div>
+            <div class="cute-receipt min-h-[680px] flex flex-col justify-between" id="receipt-print-area">
+                <div>
+                    <div class="text-center mb-6">
+                        <div class="flex justify-center mb-3">
+                            <div class="w-16 h-16 rounded-full overflow-hidden border-2 border-pink-300 shadow-inner bg-pink-50 flex items-center justify-center">
+                                <img id="logo-preview" src="https://via.placeholder.com/150/fce7f3/db2777?text=Shop" alt="Logo" class="w-full h-full object-cover">
+                            </div>
+                        </div>
+                        <h2 id="shop-name-view" class="text-lg font-semibold text-gray-800 tracking-wide">Kosame Store</h2>
+                        <p id="shop-sub-view" class="text-[10px] text-purple-400 font-medium tracking-widest uppercase">THANK YOU FOR YOUR ORDER</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-y-1.5 text-xs text-gray-500 mb-4 px-1">
+                        <div><span class="text-gray-400">Customer (ลูกค้า):</span> <span id="customer-name-view" class="text-gray-700 font-medium"></span></div>
+                        <div class="text-right"><span class="text-gray-400">Order ID (เลขที่สั่งซื้อ):</span> <span id="order-id-view" class="text-gray-700 font-medium number-font"></span></div>
+                        <div><span class="text-gray-400">Channel (ช่องทาง):</span> <span id="channel-view" class="text-purple-500 font-medium"></span></div>
+                        <div class="text-right"><span class="text-gray-400">Date (วันที่):</span> <span id="date-view" class="number-font"></span></div>
+                        <div></div>
+                        <div class="text-right"><span class="text-gray-400">Time (เวลา):</span> <span id="time-view" class="number-font"></span></div>
+                    </div>
+
+                    <div class="border-b border-dashed border-pink-200 my-4"></div>
+
+                    <div id="receipt-items-view" class="space-y-4 my-4 text-xs text-gray-700"></div>
+                </div>
+
+                <div>
+                    <div class="border-b border-dashed border-pink-200 my-4"></div>
+                    
+                    <div class="bg-gradient-to-r from-sky-50 via-purple-50 to-pink-50 rounded-2xl p-3 flex justify-between items-center mb-4 px-4 border border-purple-100">
+                        <span class="text-xs font-semibold text-purple-600 tracking-wide uppercase">Total</span>
+                        <span class="text-base font-bold text-pink-500 number-font"><span id="total-amount-view">0.00</span></span>
+                    </div>
+
+                    <div id="footer-note-view" class="text-center text-[11px] text-purple-400/90 font-medium my-3 px-2 bg-purple-50/50 py-1.5 rounded-xl border border-purple-100/40"></div>
+
+                    <div class="mt-2 flex justify-center">
+                        <img id="footer-preview" src="https://via.placeholder.com/340x80/f3e8ff/a855f7?text=♥+Thank+You+♥" alt="Footer Banner" class="max-w-full h-auto rounded-xl object-contain">
+                    </div>
+
+                    <div id="bottom-text-view" class="text-center text-[10px] text-gray-400 font-light mt-3 px-2"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let items = [
+            { name: 'เค้กสตรอว์เบอร์รี่ครีมสด', qty: 2, price: 85.00 },
+            { name: 'ชานมพาสเทลลาเต้', qty: 1, price: 55.00 }
+        ];
+
+        function handleLogin() {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            if(user === 'admin' && pass === '1234') {
+                document.getElementById('login-section').classList.add('hidden');
+                document.getElementById('main-section').classList.remove('hidden');
+                initData();
+            } else {
+                alert('Username หรือ Password ไม่ถูกต้องน้า 😭');
+            }
+        }
+
+        function handleLogout() {
+            document.getElementById('login-section').classList.remove('hidden');
+            document.getElementById('main-section').classList.add('hidden');
+        }
+
+        function initData() {
+            renderItemInputs();
+            updateReceipt();
+        }
+
+        function renderItemInputs() {
+            const container = document.getElementById('items-container');
+            container.innerHTML = '';
+            items.forEach((item, index) => {
+                container.innerHTML += `
+                    <div class="flex gap-2 items-center bg-purple-50/40 p-2 rounded-xl border border-purple-100">
+                        <input type="text" value="${item.name}" oninput="editItem(${index}, 'name', this.value)" placeholder="สินค้า" class="flex-1 border border-purple-100 rounded-lg p-1.5 text-xs focus:outline-none">
+                        <input type="number" value="${item.qty}" oninput="editItem(${index}, 'qty', this.value)" placeholder="จำนวน" class="w-12 border border-purple-100 rounded-lg p-1.5 text-xs text-center focus:outline-none">
+                        <input type="number" value="${item.price}" oninput="editItem(${index}, 'price', this.value)" placeholder="ราคา" class="w-16 border border-purple-100 rounded-lg p-1.5 text-xs text-right focus:outline-none">
+                        <button onclick="removeItemRow(${index})" class="text-rose-400 font-bold px-1 text-xs hover:text-rose-600">✕</button>
+                    </div>
+                `;
+            });
+        }
+
+        function addItemRow() {
+            items.push({ name: '', qty: 1, price: 0 });
+            renderItemInputs();
+            updateReceipt();
+        }
+
+        function removeItemRow(index) {
+            items.splice(index, 1);
+            renderItemInputs();
+            updateReceipt();
+        }
+
+        function editItem(index, key, value) {
+            items[index][key] = key === 'name' ? value : Number(value);
+            updateReceipt();
+        }
+
+        function updateReceipt() {
+            document.getElementById('shop-name-view').innerText = document.getElementById('shop-name-input').value;
+            document.getElementById('shop-sub-view').innerText = document.getElementById('shop-sub-input').value;
+            document.getElementById('customer-name-view').innerText = document.getElementById('customer-name-input').value;
+            document.getElementById('channel-view').innerText = document.getElementById('channel-input').value;
+            document.getElementById('order-id-view').innerText = document.getElementById('order-id-input').value;
+            document.getElementById('date-view').innerText = document.getElementById('date-input').value;
+            document.getElementById('time-view').innerText = document.getElementById('time-input').value;
+            
+            document.getElementById('footer-note-view').innerText = document.getElementById('footer-note-input').value;
+            // อัปเดตข้อความใต้แบนเนอร์ตัวใหม่
+            document.getElementById('bottom-text-view').innerText = document.getElementById('bottom-text-input').value;
+
+            const itemsContainer = document.getElementById('receipt-items-view');
+            itemsContainer.innerHTML = '';
+            let total = 0;
+
+            items.forEach(item => {
+                const subtotal = item.qty * item.price;
+                total += subtotal;
+                
+                itemsContainer.innerHTML += `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="font-medium text-gray-700">${item.name || 'ยังไม่ระบุสินค้า'}</div>
+                            <div class="text-[10px] text-gray-400 mt-0.5 number-font">@${item.price.toFixed(2)} x ${item.qty}</div>
+                        </div>
+                        <div class="number-font text-gray-600 text-right pt-0.5">${subtotal.toFixed(2)}</div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('total-amount-view').innerText = total.toFixed(2);
+        }
+
+        function previewImage(input, previewId) {
+            const preview = document.getElementById(previewId);
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function downloadReceiptImage() {
+            const receiptArea = document.getElementById('receipt-print-area');
+            const orderId = document.getElementById('order-id-input').value || 'receipt';
+            
+            html2canvas(receiptArea, {
+                useCORS: true,
+                scale: 2, 
+                backgroundColor: '#ffffff',
+                borderRadius: '32px'
+            }).then(canvas => {
+                const image = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = `receipt-${orderId}.png`;
+                link.href = image;
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }).catch(error => {
+                console.error('เกิดข้อผิดพลาดในการบันทึกรูปภาพ:', error);
+                alert('ไม่สามารถบันทึกเป็นรูปภาพได้ กรุณาลองใหม่อีกครั้งนะ');
+            });
+        }
+    </script>
+</body>
+</html>
