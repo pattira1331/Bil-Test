@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🍓 Igari Receipt Studio 🍧</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- นำเข้าฟอนต์ BM Jua สำหรับภาษาอังกฤษ และฟอนต์ไทยสไตล์เส้นดินสอหัวกลมมนละมุนตา -->
+<link href="https://fonts.googleapis.com/css2?family=BM+Jua&family=Itim&family=Chonburi&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<style>
+body {
+/* กำหนด Font Family ภาษาอังกฤษใช้ BM Jua ภาษาไทยใช้สไตล์เส้นดินสอกลมมนอย่าง Itim และ Chonburi */
+font-family: 'BM Jua', 'Itim', 'Chonburi', sans-serif;
+font-weight: 400;
+background-color: #F4F4F4;
+color: #252C36;
+overflow-x: hidden;
+position: relative;
+}
+
+.text-igari-main { color: #252C36; }
+.border-igari { border-color: #252C36; }
+
+/* ================= ANIMATIONS ================= */
+@keyframes igari-flush {
+0%, 100% { transform: translateY(0) scale(1); filter: drop-shadow(0 0 4px rgba(37,44,54,0.08)); }
+50% { transform: translateY(-6px) scale(1.02); filter: drop-shadow(0 0 14px rgba(37,44,54,0.15)); }
+}
+@keyframes heart-beat {
+0%, 100% { transform: scale(1) rotate(-4deg); }
+50% { transform: scale(1.12) rotate(4deg); }
+}
+@keyframes puff-twinkle {
+0%, 100% { opacity: 0.4; transform: scale(0.85); }
+50% { opacity: 1; transform: scale(1.1); transform: rotate(5deg); }
+}
+@keyframes float-cute {
+0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+50% { transform: translateY(-10px) rotate(8deg) scale(1.08); }
+}
+@keyframes twinkle-sparkle {
+0%, 100% { opacity: 0; transform: translateY(0) scale(0.3) rotate(0deg); }
+50% { opacity: 1; transform: translateY(-30px) scale(1.2) rotate(180deg); }
+100% { opacity: 0; transform: translateY(-60px) scale(0.3) rotate(360deg); }
+}
+
+/* แอนิเมชันดุ๊กดิ๊กสำหรับไอคอนและอิโมจิทุกจุด */
+@keyframes cute-bounce {
+0%, 100% { transform: translateY(0); }
+50% { transform: translateY(-4px); }
+}
+@keyframes cute-wiggle {
+0%, 100% { transform: rotate(0deg); }
+25% { transform: rotate(-8deg); }
+75% { transform: rotate(8deg); }
+}
+@keyframes global-cute-float {
+0%, 100% { transform: translateY(0) scale(1); }
+50% { transform: translateY(-3px) scale(1.05); }
+}
+
+/* แอนิเมชันสำหรับเอฟเฟกต์ใบไม้/หัวใจร่วงหล่น */
+@keyframes cute-fall {
+0% { transform: translateY(-20px) rotate(0deg); opacity: 0; }
+10% { opacity: 1; }
+90% { opacity: 1; }
+100% { transform: translateY(105vh) rotate(360deg); opacity: 0; }
+}
+
+.animate-igari { animation: igari-flush 3.8s ease-in-out infinite; }
+.animate-heart { animation: heart-beat 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+.animate-puff { animation: puff-twinkle 2.2s ease-in-out infinite; }
+.animate-bg-cute { animation: float-cute 4.5s ease-in-out infinite; }
+.animate-cute-bounce { animation: cute-bounce 1.8s ease-in-out infinite; }
+.animate-cute-wiggle { animation: cute-wiggle 1.4s ease-in-out infinite; }
+
+/* ใส่เอฟเฟกต์ดุ๊กดิ๊กให้สัญลักษณ์ทั่วไปและสติกเกอร์ที่ระบุ */
+.cute-emoji-shake, span, img:not([id]):not(.falling-item) {
+display: inline-block;
+animation: global-cute-float 2s ease-in-out infinite;
+}
+
+/* ================= GRID PATTERN BACKGROUND ================= */
+.stripes-bg {
+position: fixed;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+z-index: -2;
+background-color: #F5F5F3;
+background-image:
+linear-gradient(rgba(37, 44, 54, 0.025) 1px, transparent 1px),
+linear-gradient(90deg, rgba(37, 44, 54, 0.025) 1px, transparent 1px);
+background-size: 26px 26px;
+}
+
+.igari-blush-bg {
+position: fixed;
+width: 450px;
+height: 450px;
+border-radius: 50%;
+background: radial-gradient(circle, rgba(190, 44, 31, 0.06) 0%, transparent 70%);
+filter: blur(50px);
+z-index: -1;
+pointer-events: none;
+}
+
+.bg-element-cute {
+position: fixed;
+z-index: -1;
+pointer-events: none;
+object-fit: contain;
+opacity: 0.85;
+}
+
+.sparkle-item {
+position: absolute;
+pointer-events: none;
+animation: twinkle-sparkle ease-in-out infinite;
+z-index: 60;
+}
+
+/* เลเยอร์สำหรับเอฟเฟกต์ร่วงหล่น */
+#falling-container {
+position: fixed;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+z-index: 9999;
+pointer-events: none;
+overflow: hidden;
+}
+
+.falling-item {
+position: absolute;
+top: -20px;
+pointer-events: none;
+animation: cute-fall linear infinite;
+}
+
+/* ================= RECEIPT & EDITOR STYLING ================= /
+.minimal-play-receipt {
+background-color: #ffffff;
+position: relative;
+border-radius: 28px;
+border: 4px dashed #BE2C1F;
+box-shadow: 0 16px 36px rgba(37, 44, 54, 0.06);
+padding: 16px 20px; / ปรับลด Padding ลงเพื่อความกระชับ */
+background-image: radial-gradient(rgba(190, 44, 31, 0.02) 1.5px, transparent 1.5px);
+background-size: 20px 20px;
+}
+
+/* ลาย Polkadot ให้ฝั่งกรอกข้อมูลที่มีช่องอินพุต */
+.polkadot-editor-panel {
+background-color: rgba(255, 255, 255, 0.95);
+background-image: radial-gradient(rgba(190, 44, 31, 0.02) 2px, transparent 2px);
+background-size: 20px 20px;
+}
+
+.play-mini-btn {
+font-family: 'BM Jua', 'Itim', 'Chonburi', sans-serif;
+font-weight: 500;
+transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.play-mini-btn:hover {
+transform: translateY(-2.5px) scale(1.015);
+box-shadow: 0 10px 20px rgba(37, 44, 54, 0.15);
+}
+.play-mini-btn:active {
+transform: translateY(1px);
+}
+.input-minimal {
+border: 2px solid #E2E8F0;
+border-radius: 18px;
+transition: all 0.2s ease;
+background-color: #FAFAFA;
+color: #252C36;
+font-family: 'BM Jua', 'Itim', 'Chonburi', sans-serif;
+font-weight: 400;
+}
+.input-minimal:focus {
+border-color: #BE2C1F;
+background-color: #ffffff;
+outline: none;
+box-shadow: 0 0 0 4px rgba(190, 44, 31, 0.12);
+}
+.icon-mini {
+width: 22px;
+height: 22px;
+display: inline-block;
+flex-shrink: 0;
+}
+</style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+
+<div class="stripes-bg"></div>
+<div id="falling-container"></div>
+
+<div class="igari-blush-bg" style="top: 5%; left: -120px;"></div>
+<div class="igari-blush-bg" style="bottom: 10%; right: -120px; background: radial-gradient(circle, rgba(190, 44, 31, 0.06) 0%, transparent 70%);"></div>
+
+<!-- BACKGROUND ELEMENTS -->
+<img src="https://i.postimg.cc/YSYzgrT4/mi-m-ch-x-682-20260708221022.png" class="bg-element-cute animate-bg-cute" style="top: 8%; left: 5%; width: 28px; height: 28px; animation-delay: 0s;">
+<span class="bg-element-cute animate-bg-cute text-2xl" style="top: 15%; left: 45%; animation-delay: 1.2s;">🐱</span>
+<img src="https://i.postimg.cc/vmft9YC4/star.png" class="bg-element-cute animate-bg-cute" style="top: 22%; left: 25%; width: 20px; height: 20px; animation-delay: 0.5s;">
+<img src="https://i.postimg.cc/yY5cxx7H/mi-m-ch-x-682-20260708223709.png" class="bg-element-cute animate-bg-cute" style="top: 5%; left: 75%; width: 28px; height: 28px; animation-delay: 0.9s;">
+
+<img src="https://i.postimg.cc/TPgJmdBL/mi-m-ch-x-682-20260708221123.png" class="bg-element-cute animate-bg-cute" style="top: 35%; left: 8%; width: 26px; height: 26px; animation-delay: 2.3s;">
+<img src="https://i.postimg.cc/yY5cxx7H/mi-m-ch-x-682-20260708223709.png" class="bg-element-cute animate-bg-cute" style="top: 55%; left: 3%; width: 30px; height: 30px; animation-delay: 0.8s;">
+<img src="https://i.postimg.cc/vmft9YC4/star.png" class="bg-element-cute animate-bg-cute" style="bottom: 25%; left: 12%; width: 22px; height: 22px; animation-delay: 3.1s;">
+<span class="bg-element-cute animate-bg-cute text-2xl" style="bottom: 8%; left: 28%; animation-delay: 1.7s;">🐱</span>
+
+<img src="https://i.postimg.cc/vmft9YC4/star.png" class="bg-element-cute animate-bg-cute" style="top: 10%; right: 8%; width: 22px; height: 22px; animation-delay: 1.5s;">
+<span class="bg-element-cute animate-bg-cute text-2xl" style="top: 28%; right: 4%; animation-delay: 0.2s;">🐱</span>
+<img src="https://i.postimg.cc/yY5cxx7H/mi-m-ch-x-682-20260708223709.png" class="bg-element-cute animate-bg-cute" style="top: 48%; right: 20%; width: 26px; height: 26px; animation-delay: 2.7s;">
+<img src="https://i.postimg.cc/vmft9YC4/star.png" class="bg-element-cute animate-bg-cute" style="top: 65%; right: 6%; width: 18px; height: 18px; animation-delay: 0.9s;">
+<img src="https://i.postimg.cc/YSYzgrT4/mi-m-ch-x-682-20260708221022.png" class="bg-element-cute animate-bg-cute" style="bottom: 18%; right: 15%; width: 32px; height: 32px; animation-delay: 2.1s;">
+<span class="bg-element-cute animate-bg-cute text-2xl" style="bottom: 5%; right: 4%; animation-delay: 3.5s;">🐱</span>
+
+<!-- ปุ่มควบคุมเพลงมุมขวาบน -->
+<div class="fixed top-4 right-4 z-50">
+<button onclick="toggleMusic()" id="music-btn" class="bg-white/90 border-2 border-[#ABBB50] p-2.5 rounded-full shadow-md hover:scale-110 transition flex items-center justify-center text-lg">
+🎵
+</button>
+</div>
+
+<!-- Login Section -->
+<div id="login-section" class="flex items-center justify-center min-h-[85vh] relative">
+<div id="login-sparkle-container" class="absolute inset-0 pointer-events-none overflow-hidden rounded-[32px] z-50"></div>
+
+<div class="bg-white/95 backdrop-blur-md p-8 rounded-[32px] w-96 border-4 border-[#BE2C1F] shadow-xl animate-igari relative z-10 text-center">
+<h2 class="text-xl font-semibold mb-6 text-center text-igari-main tracking-wider flex items-center justify-center gap-2">
+<span class="animate-cute-bounce text-[22px]">🐱</span>
+IGARI RECEIPT STUDIO
+</h2>
+<p class="text-slate-500 text-sm mb-6 font-light">ยินดีต้อนรับสู่สตูดิโอออกแบบใบเสร็จสุดคิวท์ ✨🍮🍀</p>
+
+<button onclick="handleLogin()" class="w-full play-mini-btn bg-[#252C36] hover:bg-[#1a1f26] text-white font-medium py-3 rounded-2xl text-base shadow-md tracking-wide flex items-center justify-center gap-2">
+ENTER STUDIO 🐾
+<span class="animate-puff text-[#BE2C1F] w-5 h-5 inline-block text-sm">✨</span>
+</button>
+
+<div class="flex justify-center items-center gap-2 mt-6 text-sm select-none">
+<span>🍀</span><span>🍎</span><span>🍮</span><span>🍏</span><span>🌟</span>
+</div>
+</div>
+</div>
+
+<!-- Main Section -->
+<div id="main-section" class="container mx-auto max-w-5xl hidden">
+<div class="flex flex-col md:flex-row gap-4 justify-between items-center mb-8 bg-white/90 backdrop-blur-sm p-4 rounded-2xl border-2 border-white shadow-md">
+<div class="flex items-center gap-3">
+<div class="w-12 h-12 overflow-hidden rounded-xl border-2 border-[#BE2C1F] bg-white p-0.5 flex items-center justify-center text-xl animate-cute-bounce">
+🍮
+</div>
+<h1 class="text-xl font-medium text-igari-main tracking-wide">
+มาทำใบเสร็จนุ่มฟูกันเถอะ!~ 🐱✨🍀🍏
+</h1>
+</div>
+<button onclick="handleLogout()" class="bg-white text-slate-400 border border-slate-200 px-4 py-1.5 rounded-xl hover:bg-slate-100 transition text-xs font-medium self-end md:self-auto">Log Out</button>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+
+<!-- Editor Panel -->
+<div class="polkadot-editor-panel p-6 rounded-[32px] border-2 border-white shadow-md">
+<h3 class="text-lg font-semibold mb-6 text-igari-main uppercase tracking-wider border-b-2 border-slate-100 pb-3 flex items-center gap-2">
+<span class="icon-mini text-lg animate-cute-bounce">🐱</span>
+Cat Cafe & Studio Panel ✨
+</h3>
+
+<div class="mb-4">
+<label class="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+🐾 อัปโหลดโลโก้ร้านของคุณ 🍮
+</label>
+<input type="file" id="logo-input" accept="image/*" onchange="previewImage(this, 'logo-preview')" class="mt-2 block w-full text-xs text-slate-400 file:mr-4 file:py-1.5 file:px-3 file:rounded-xl file:border file:border-slate-200 file:text-xs file:font-medium file:bg-white file:text-slate-500">
+</div>
+
+<div class="grid grid-cols-2 gap-4 mb-4">
+<div>
+<label class="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+🐱 ชื่อร้าน/หัวข้อหลัก
+</label>
+<input type="text" id="shop-name-input" value="pattira だ" class="mt-1.5 block w-full text-sm input-minimal p-2.5 font-medium" oninput="updateReceipt()">
+</div>
+<div>
+<label class="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+🌟 รายละเอียดใต้ชื่อร้าน
+</label>
+<input type="text" id="shop-sub-input" value="THANK YOU FOR YOUR ORDER" class="mt-1.5 block w-full text-sm input-minimal p-2.5 tracking-wider font-light" oninput="updateReceipt()">
+</div>
+</div>
+
+<div class="grid grid-cols-2 gap-4 mb-4">
+<div>
+<label class="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+👤 ชื่อลูกค้า 🍀
+</label>
+<input type="text" id="customer-name-input" value="คุณพิมพลอย ใจดี" class="mt-1.5 block w-full text-sm input-minimal p-2.5" oninput="updateReceipt()">
+</div>
+<div>
+<label class="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+📍 ช่องทางการซื้อขาย 🍎
+</label>
+<input type="text" id="channel-input" value="Instagram" class="mt-1.5 block w-full text-sm input-minimal p-2.5" oninput="updateReceipt()">
+</div>
+</div>
+
+<div class="grid grid-cols-2 gap-4 mb-4">
+<div>
+<label class="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+🏷️ Order ID 🍏
+</label>
+<input type="text" id="order-id-input" value="#KS-889" class="mt-1.5 block w-full text-sm input-minimal p-2.5" oninput="updateReceipt()">
+</div>
+<div>
+<label class="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+⏰ Time (เวลา) ✨
+</label>
+<input type="text" id="time-input" value="14:25" class="mt-1.5 block w-full text-sm input-minimal p-2.5" oninput="updateReceipt()">
+</div>
+</div>
+
+<div class="mb-4">
+<label class="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+📅 Date (วันที่) 🌟
+</label>
+<input type="text" id="date-input" value="07/07/2026" class="mt-1.5 block w-full text-sm input-minimal p-2.5" oninput="updateReceipt()">
+</div>
+
+<div class="mb-4">
+<label class="flex items-center gap-1.5 text-base font-semibold text-igari-main mb-2">
+🐟 รายการสินค้าในใบเสร็จ 🍮
+</label>
+<div id="items-container" class="space-y-2.5"></div>
+<button onclick="addItemRow()" class="mt-3 text-sm bg-slate-50 text-slate-500 border border-slate-200 font-medium px-4 py-2.5 rounded-xl hover:bg-slate-100 transition flex items-center gap-1">
+<span>+</span> เพิ่มรายการเหมียว 🐱
+</button>
+</div>
+
+<div class="mb-4">
+<label class="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+💬 ข้อความขอบคุณ/หมายเหตุ 🍀
+</label>
+<input type="text" id="footer-note-input" value="ได้รับสินค้าแล้ว อย่าลืมรีวิวแท็กมาอวดกันน้า" class="mt-1.5 block w-full text-sm input-minimal p-2.5" oninput="updateReceipt()">
+</div>
+
+<div class="mb-4">
+<label class="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+🖼️ รูปภาพตกแต่งด้านล่างสุด (Footer Banner) 🍎
+</label>
+<input type="file" id="footer-img-input" accept="image/*" onchange="previewImage(this, 'footer-preview')" class="mt-2 block w-full text-xs text-slate-400 file:mr-4 file:py-1.5 file:px-3 file:rounded-xl file:border file:border-slate-200">
+</div>
+
+<div class="mb-6">
+<label class="flex items-center gap-1.5 text-xs font-medium text-slate-400">
+💌 ข้อความหมายเหตุด้านล่างสุด 🍏
+</label>
+<input type="text" id="bottom-text-input" value="ขอบคุณที่อุดหนุนร้านเล็กๆ ของเรานะคะ ช่องทางติดต่อ Line: @kosamestore" class="mt-1.5 block w-full text-sm input-minimal p-2.5" oninput="updateReceipt()">
+</div>
+
+<button onclick="downloadReceiptImage()" class="w-full play-mini-btn bg-[#BE2C1F] text-white font-medium py-3.5 rounded-2xl transition mt-2 shadow-md tracking-wider hover:bg-[#a12318] text-base">
+DOWNLOAD CAT RECEIPT 🐾✨
+</button>
+</div>
+
+<!-- Receipt Preview Area -->
+<div class="relative p-2 md:sticky md:top-4">
+<div class="minimal-play-receipt flex flex-col justify-between overflow-hidden" id="receipt-print-area">
+
+<!-- ปรับลด margin ด้านบนใบเสร็จเพื่อความกระชับ -->
+<div class="flex justify-between items-center px-2 mb-2 select-none">
+<div class="flex gap-1 items-center animate-cute-bounce">
+<span class="text-sm">🐱</span>
+<span class="text-sm">🍀</span>
+<span class="text-sm">🍏</span>
+<span class="text-sm">🌟</span>
+</div>
+<div class="flex gap-1 items-center opacity-40 text-[10px]">
+<span>✨</span>
+<span>🍎</span>
+<span>🍮</span>
+<span>✨</span>
+</div>
+<div class="flex gap-1 items-center animate-cute-wiggle">
+<span class="text-sm">🍮</span>
+<span class="text-sm">🍎</span>
+<span class="text-sm">🍀</span>
+<span class="text-sm">🐱</span>
+</div>
+</div>
+
+<!-- ลายน้ำโปร่งแสง -->
+<span class="absolute top-[18%] left-[6%] text-xl opacity-[0.07] animate-cute-bounce pointer-events-none select-none">🐱</span>
+<span class="absolute top-[24%] right-[12%] text-lg opacity-[0.12] animate-cute-wiggle pointer-events-none select-none">🍀</span>
+<span class="absolute top-[35%] left-[14%] text-lg opacity-[0.1] animate-cute-bounce pointer-events-none select-none">🍮</span>
+<span class="absolute top-[48%] left-[10%] text-lg opacity-[0.12] animate-cute-wiggle pointer-events-none select-none">🍎</span>
+<img src="https://i.postimg.cc/vmft9YC4/star.png" class="absolute top-[52%] right-[6%] w-5 h-5 opacity-[0.1] animate-cute-bounce pointer-events-none object-contain">
+<span class="absolute top-[58%] left-[16%] text-sm opacity-[0.15] pointer-events-none select-none">✨</span>
+<span class="absolute bottom-[35%] left-[8%] text-lg opacity-[0.12] animate-cute-bounce pointer-events-none select-none">🍏</span>
+<span class="absolute bottom-[40%] right-[8%] text-2xl opacity-[0.07] animate-cute-wiggle pointer-events-none select-none">🐱</span>
+<span class="absolute bottom-[22%] left-[14%] text-sm opacity-[0.15] pointer-events-none select-none">✨</span>
+<span class="absolute bottom-[25%] right-[16%] text-lg opacity-[0.12] animate-cute-bounce pointer-events-none select-none">🍀</span>
+<span class="absolute bottom-[15%] left-[20%] text-sm opacity-[0.1] pointer-events-none select-none">🍮</span>
+
+<div>
+<!-- ปรับขนาดกรอบโลโก้ลงเป็น w-20 h-20 และลด margin -->
+<div class="flex justify-center mb-1 relative">
+<div class="w-20 h-20 rounded-2xl overflow-hidden border-4 border-[#ABBB50] bg-white p-1 flex items-center justify-center shadow-md animate-igari">
+<img id="logo-preview" src="https://via.placeholder.com/150/fff/BE2C1F?text=%F0%9F%90%BE" alt="Logo" class="w-full h-full object-cover rounded-xl">
+</div>
+</div>
+
+<!-- ส่วนหัวร้านกระชับขึ้น -->
+<div class="text-center mb-2 relative">
+<h2 id="shop-name-view" class="text-lg font-semibold text-igari-main tracking-wide">pattira だ</h2>
+<p id="shop-sub-view" class="text-[8px] text-slate-400 font-medium tracking-widest uppercase mt-0.5">THANK YOU FOR YOUR ORDER</p>
+</div>
+
+<!-- ข้อมูลลูกค้าและขอบเส้นประที่ชิดขึ้น -->
+<div class="grid grid-cols-2 gap-y-0.5 text-[10px] font-normal text-slate-400 mb-0.5 px-1">
+<div><span>Customer:</span> <span id="customer-name-view" class="text-igari-main font-medium ml-1"></span></div>
+<div class="text-right flex items-center justify-end gap-1"><span>Order ID:</span> <span id="order-id-view" class="text-igari-main font-medium"></span></div>
+<div><span>Channel:</span> <span id="channel-view" class="text-slate-500 font-medium ml-1"></span></div>
+<div class="text-right"><span>Date:</span> <span id="date-view" class="text-slate-500 ml-1"></span></div>
+<div></div>
+<div class="text-right"><span>Time:</span> <span id="time-view" class="text-slate-500 ml-1"></span></div>
+</div>
+
+<div class="border-b-2 border-dashed border-[#BE2C1F]/30 my-1.5"></div>
+
+<!-- รายการสินค้าปรับเป็น space-y-1.5 เพื่อลดพื้นที่ว่าง -->
+<div id="receipt-items-view" class="space-y-1.5 my-1.5 text-xs font-normal text-igari-main"></div>
+</div>
+
+<div>
+<div class="border-b-2 border-dashed border-[#BE2C1F]/30 my-1.5"></div>
+
+<!-- กล่องยอดรวมแบบ Compact ปรับ padding และขนาดฟอนต์ -->
+<div class="bg-[#BE2C1F]/10 rounded-xl p-1.5 flex justify-between items-center mb-1.5 px-3 border border-[#BE2C1F]/20 relative">
+<span class="text-[10px] font-bold text-[#252C36] tracking-wider uppercase flex items-center gap-1.5">
+TOTAL
+<span class="w-3 h-3 text-[#BE2C1F] animate-heart opacity-60 text-[10px] flex items-center justify-center">
+✨
+</span>
+</span>
+<span class="text-base font-bold text-igari-main">฿<span id="total-amount-view">0.00</span></span>
+</div>
+
+<!-- กล่องข้อความขอบคุณกระชับขึ้น -->
+<div id="footer-note-view" class="text-center text-[10px] text-[#252C36] font-medium my-1 px-3 bg-[#BE2C1F]/5 py-1 rounded-xl border border-[#BE2C1F]/10 animate-igari"></div>
+
+<!-- แบนเนอร์ด้านล่าง (เพิ่ม class="hidden" เริ่มต้นไว้) -->
+<div class="mt-1 flex justify-center relative">
+<img id="footer-preview" src="" alt="Footer Banner" class="max-w-full h-auto rounded-xl object-contain border border-slate-100 hidden">
+</div>
+
+<div id="bottom-text-view" class="text-center text-[8px] text-slate-400 font-normal mt-1.5 px-2 tracking-wide"></div>
+
+<!-- ไอคอนท้ายใบเสร็จ -->
+<div class="flex justify-center items-center gap-2 mt-2 select-none text-[10px]">
+<span class="opacity-40">🍀</span>
+<span class="opacity-40">🍏</span>
+<span class="opacity-40">🌟</span>
+<span>•</span>
+<span class="text-xs opacity-50 animate-cute-bounce">🐱</span>
+<span>•</span>
+<span class="opacity-40">🍮</span>
+<span class="opacity-40">🍎</span>
+<span class="opacity-40">✨</span>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+
+<!-- SCRIPT (คงเดิมไม่มีส่วนใดเสียหาย) -->
+<script>
+let items = [
+{ name: 'เค้กสตรอว์เบอร์รี่ครีมสด', qty: 2, price: 85.00 },
+{ name: 'ชานมพาสเทลลาเต้', qty: 1, price: 55.00 }
+ ];
+
+let sparkleInterval;
+let audioCtx = null;
+let isPlaying = false;
+let musicTimer = null;
+
+function playCuteNote(frequency, duration, startTime) {
+if (!audioCtx) return;
+let osc = audioCtx.createOscillator();
+let gain = audioCtx.createGain();
+osc.type = 'triangle';
+osc.frequency.setValueAtTime(frequency, startTime);
+gain.gain.setValueAtTime(0.08, startTime);
+gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+osc.connect(gain);
+gain.connect(audioCtx.destination);
+osc.start(startTime);
+osc.stop(startTime + duration);
+}
+
+function startCuteMusicLoop() {
+if (!isPlaying) return;
+const melody = [
+261.63, 329.63, 392.00, 523.25, 392.00, 329.63,
+293.66, 349.23, 440.00, 587.33, 440.00, 349.23,
+329.63, 392.00, 493.88, 659.25, 493.88, 392.00,
+349.23, 440.00, 523.25, 698.46, 523.25, 440.00
+ ];
+let now = audioCtx.currentTime;
+let tempo = 0.25;
+melody.forEach((note, index) => {
+playCuteNote(note, tempo * 1.8, now + (index * tempo));
+});
+musicTimer = setTimeout(startCuteMusicLoop, melody.length * tempo * 1000);
+}
+
+function toggleMusic() {
+if (!audioCtx) {
+audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+const btn = document.getElementById('music-btn');
+if (!isPlaying) {
+isPlaying = true;
+btn.innerText = '🔊';
+btn.style.borderColor = '#BE2C1F';
+if (audioCtx.state === 'suspended') {
+audioCtx.resume();
+}
+startCuteMusicLoop();
+} else {
+isPlaying = false;
+btn.innerText = '🔇';
+btn.style.borderColor = '#ABBB50';
+clearTimeout(musicTimer);
+}
+}
+
+function createFallingEffects() {
+const container = document.getElementById('falling-container');
+if (!container) return;
+const itemsList = ['✨', '🍀', '❤️'];
+setInterval(() => {
+const item = document.createElement('div');
+item.className = 'falling-item select-none text-base md:text-xl';
+item.innerText = itemsList[Math.floor(Math.random() * itemsList.length)];
+item.style.left = 
+
+{duration}s;
+const scale = Math.random() * 0.5 + 0.75;
+item.style.transform = scale(${scale});
+container.appendChild(item);
+setTimeout(() => { item.remove(); }, duration * 1000);
+}, 450);
+}
+
+function handleLogin() {
+document.getElementById('login-section').classList.add('hidden');
+document.getElementById('main-section').classList.remove('hidden');
+clearInterval(sparkleInterval);
+if (!isPlaying) { toggleMusic(); }
+initData();
+}
+
+function handleLogout() {
+document.getElementById('login-section').classList.remove('hidden');
+document.getElementById('main-section').classList.add('hidden');
+startLoginSparkles();
+}
+
+function initData() {
+renderItemInputs();
+updateReceipt();
+}
+
+function renderItemInputs() {
+const container = document.getElementById('items-container');
+container.innerHTML = '';
+items.forEach((item, index) => {
+container.innerHTML += <div class="flex gap-2 items-center bg-slate-50 p-2 rounded-xl border border-slate-200"> <input type="text" value="`${item.name}" oninput="editItem(
+
+{item.qty}" oninput="editItem(
+
+{item.price}" oninput="editItem(
+
+{index})" class="text-slate-400 font-normal px-1 text-xs hover:text-rose-500">✕</button>
+</div>
+`;
+});
+}
+
+function addItemRow() {
+items.push({ name: '', qty: 1, price: 0 });
+renderItemInputs();
+updateReceipt();
+}
+
+function removeItemRow(index) {
+items.splice(index, 1);
+renderItemInputs();
+updateReceipt();
+}
+
+function editItem(index, key, value) {
+items[index][key] = key === 'name' ? value : Number(value);
+updateReceipt();
+}
+
+function updateReceipt() {
+document.getElementById('shop-name-view').innerText = document.getElementById('shop-name-input').value;
+document.getElementById('shop-sub-view').innerText = document.getElementById('shop-sub-input').value;
+document.getElementById('customer-name-view').innerText = document.getElementById('customer-name-input').value;
+document.getElementById('channel-view').innerText = document.getElementById('channel-input').value;
+document.getElementById('order-id-view').innerText = document.getElementById('order-id-input').value;
+document.getElementById('date-view').innerText = document.getElementById('date-input').value;
+document.getElementById('time-view').innerText = document.getElementById('time-input').value;
+
+document.getElementById('footer-note-view').innerText = document.getElementById('footer-note-input').value;
+document.getElementById('bottom-text-view').innerText = document.getElementById('bottom-text-input').value;
+
+const itemsContainer = document.getElementById('receipt-items-view');
+itemsContainer.innerHTML = '';
+let total = 0;
+
+items.forEach(item => {
+const subtotal = item.qty * item.price;
+total += subtotal;
+
+itemsContainer.innerHTML += <div class="flex justify-between items-start tracking-wide"> <div> <div class="font-medium text-igari-main text-[11px]">
+
+{item.price.toFixed(2)} x 
+
+{subtotal.toFixed(2)}</div> </div>;
+});
+
+document.getElementById('total-amount-view').innerText = total.toFixed(2);
+}
+
+function previewImage(input, previewId) {
+const preview = document.getElementById(previewId);
+if (input.files && input.files[0]) {
+const reader = new FileReader();
+reader.onload = function(e) {
+preview.src = e.target.result;
+preview.classList.remove('hidden'); // แสดงรูปเมื่ออัปโหลด
+}
+reader.readAsDataURL(input.files[0]);
+}
+}
+
+function downloadReceiptImage() {
+const receiptArea = document.getElementById('receipt-print-area');
+const orderId = document.getElementById('order-id-input').value || 'receipt';
+
+html2canvas(receiptArea, {
+useCORS: true,
+scale: 3,
+backgroundColor: '#ffffff',
+borderRadius: '28px'
+}).then(canvas => {
+const image = canvas.toDataURL('image/png');
+const link = document.createElement('a');
+link.download = cat-receipt-${orderId}.png;
+link.href = image;
+document.body.appendChild(link);
+link.click();
+document.body.removeChild(link);
+}).catch(error => {
+console.error('Error generating canvas:', error);
+alert('เกิดข้อผิดพลาดในการบันทึกภาพ กรุณาลองใหม่อีกครั้ง');
+});
+}
+
+function startLoginSparkles() {
+const container = document.getElementById('login-sparkle-container');
+if(!container) return;
+sparkleInterval = setInterval(() => {
+if(document.getElementById('login-section').classList.contains('hidden')) return;
+const sparkle = document.createElement('div');
+sparkle.className = 'sparkle-item text-xs select-none';
+const itemsList = ['🐱', '🍀', '🍎', '🍏', '🌟', '🍮', '✨'];
+sparkle.innerText = itemsList[Math.floor(Math.random() * itemsList.length)];
+sparkle.style.left = ${Math.random() * 100}%; sparkle.style.top = $``{Math.random() * 80 + 10}%; const duration = Math.random() * 1.5 + 1.5; sparkle.style.animationDuration =${duration}s;
+container.appendChild(sparkle);
+setTimeout(() => { sparkle.remove(); }, duration * 1000);
+}, 250);
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+startLoginSparkles();
+createFallingEffects();
+});
+</script>
+</body>
+  </html>
